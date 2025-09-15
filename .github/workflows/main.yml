@@ -27,7 +27,7 @@ jobs:
           & "$env:USERPROFILE\depcheck\dependency-check\bin\dependency-check.bat" `
             --project "MyProject" `
             --scan "$scanPath" `
-            --format "HTML,JSON,XML" `
+            --format "ALL" `
             --out "$reportPath" `
             --exclude "**/*.jar" `
             --exclude "**/*.java" `
