@@ -20,7 +20,7 @@
 					"raw": "{\n\t\"name\": \"Test User\",\n\t\"email\": \"test2222@test.com\",\n\t\"password\": \"test123\",\n\t\"passwordConfirmation\": \"test123\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:6000/api/registrations",
+					"raw": "http://localhost:5000/api/registrations",
 					"protocol": "http",
 					"host": [
 						"localhost"
