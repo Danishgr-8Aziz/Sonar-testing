@@ -1,0 +1,40 @@
+name: SonarQube SAST scanning
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs: 
+   depcheck:
+   runs-on: windows-latest
+
+   steps: 
+     - name: checkout repository 
+       uses: actions/checkout@v4
+
+     - name: Download Dependency check
+       run: | 
+         $scanPath = "${{ github.workspace }}"
+         $reportPath = "${{ github.workspace }}\depcheck-report"
+         New-Item -ItemType Directory -Path $reportPath | Out-Null
+
+         & "$env:USERPROFILE\depcheck\dependency-check\bin\dependency-check.bat"
+           --project "Dchecktest"
+           --scan "$scanPath"
+           --format ""
+           --out ""
+           --exclude ""
+           --exclude ""
+
+     shell: pwsh
+
+     - name: Upload Report
+       uses: actions/upload-artifact@v4
+       with: 
+         name: dependency-check-report
+         path: depcheck-report
+           
+
+      
