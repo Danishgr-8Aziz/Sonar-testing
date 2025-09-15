@@ -1,42 +1,38 @@
-name: Dependency Check Scan
+name: Dependency-Check Scan
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
+  workflow_dispatch: # run manually from the Actions tab
 
 jobs:
-  depcheck:
-    runs-on: windows-latest
+  owasp-scan:
+    runs-on: ubuntu-latest  # using GitHub-hosted runner
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Java (needed for Dependency-Check)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
       - name: Download Dependency-Check
         run: |
-          Invoke-WebRequest -Uri https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.3/dependency-check-10.0.3-release.zip -OutFile depcheck.zip
-          Expand-Archive depcheck.zip -DestinationPath $env:USERPROFILE\depcheck
+          curl -L -o dependency-check.zip \
+            https://github.com/jeremylong/DependencyCheck/releases/latest/download/dependency-check.zip
+          unzip dependency-check.zip -d dependency-check
 
-      - name: Run OWASP Dependency-Check
+      - name: Run Dependency-Check
         run: |
-          $scanPath = "${{ github.workspace }}"
-          $reportPath = "${{ github.workspace }}\depcheck-report"
-          New-Item -ItemType Directory -Path $reportPath | Out-Null
+          ./dependency-check/dependency-check/bin/dependency-check.sh \
+            --scan . \
+            --format HTML \
+            --out reports \
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
 
-          & "$env:USERPROFILE\depcheck\dependency-check\bin\dependency-check.bat" `
-            --project "MyProject" `
-            --scan "$scanPath" `
-            --format "ALL" `
-            --out "$reportPath" `
-            --exclude "**/*.jar" `
-            --exclude "**/*.java" `
-            --exclude "CI_CD/**" `
-            --exclude "**/HttpClient.exe"
-        shell: pwsh
-
-      - name: Upload report
+      - name: Upload report artifact
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: depcheck-report
+          path: reports
