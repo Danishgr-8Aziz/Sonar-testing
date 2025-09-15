@@ -1,40 +1,42 @@
-name: SonarQube SAST scanning
+name: Dependency Check Scan
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
-jobs: 
-   depcheck:
-   runs-on: windows-latest
+jobs:
+  depcheck:
+    runs-on: windows-latest
 
-   steps: 
-     - name: checkout repository 
-       uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-     - name: Download Dependency check
-       run: | 
-         $scanPath = "${{ github.workspace }}"
-         $reportPath = "${{ github.workspace }}\depcheck-report"
-         New-Item -ItemType Directory -Path $reportPath | Out-Null
+      - name: Download Dependency-Check
+        run: |
+          Invoke-WebRequest -Uri https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.3/dependency-check-10.0.3-release.zip -OutFile depcheck.zip
+          Expand-Archive depcheck.zip -DestinationPath $env:USERPROFILE\depcheck
 
-         & "$env:USERPROFILE\depcheck\dependency-check\bin\dependency-check.bat"
-           --project "Dchecktest"
-           --scan "$scanPath"
-           --format ""
-           --out ""
-           --exclude ""
-           --exclude ""
+      - name: Run OWASP Dependency-Check
+        run: |
+          $scanPath = "${{ github.workspace }}"
+          $reportPath = "${{ github.workspace }}\depcheck-report"
+          New-Item -ItemType Directory -Path $reportPath | Out-Null
 
-     shell: pwsh
+          & "$env:USERPROFILE\depcheck\dependency-check\bin\dependency-check.bat" `
+            --project "MyProject" `
+            --scan "$scanPath" `
+            --format "HTML,JSON,XML" `
+            --out "$reportPath" `
+            --exclude "**/*.jar" `
+            --exclude "**/*.java" `
+            --exclude "CI_CD/**" `
+            --exclude "**/HttpClient.exe"
+        shell: pwsh
 
-     - name: Upload Report
-       uses: actions/upload-artifact@v4
-       with: 
-         name: dependency-check-report
-         path: depcheck-report
-           
-
-      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: depcheck-report
