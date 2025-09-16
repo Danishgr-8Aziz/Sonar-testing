@@ -1,39 +1,33 @@
-name: Dependency-Check Scan
+name: Dependency Check Scan
 
 on:
-  workflow_dispatch: # run manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
-  owasp-scan:
-    runs-on: ubuntu-latest  # using GitHub-hosted runner
-
+  dependency-check:
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Java (needed for Dependency-Check)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Download Dependency-Check
+      - name: Download Dependency-Check v12.1.0
         run: |
-          curl -L -o dependency-check.zip \
-            https://github.com/jeremylong/DependencyCheck/releases/latest/download/dependency-check.zip
-          unzip dependency-check.zip -d dependency-check
+          Invoke-WebRequest -Uri https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip -OutFile dc.zip
+          Expand-Archive dc.zip -DestinationPath dc
 
       - name: Run Dependency-Check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          ./dependency-check/dependency-check/bin/dependency-check.sh \
-            --scan . \
-            --format ALL \
-            --out reports \
-            --nvdApiKey ${{ secrets.NVD_API_KEY }}
-            --noupdate
+          ./dc/dependency-check/bin/dependency-check.bat `
+            --project "MyProject" `
+            --scan "." `
+            --format "HTML" `
+            --out "dependency-check-report" `
+            --nvdApiKey "$env:NVD_API_KEY"
 
-      - name: Upload report artifact
+      - name: Upload report as artifact
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: reports
+          path: dependency-check-report
