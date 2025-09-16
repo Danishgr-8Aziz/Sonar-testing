@@ -27,7 +27,7 @@ jobs:
         run: |
           ./dependency-check/dependency-check/bin/dependency-check.sh \
             --scan . \
-            --format HTML \
+            --format ALL \
             --out reports \
             --nvdApiKey ${{ secrets.NVD_API_KEY }}
             --noupdate
